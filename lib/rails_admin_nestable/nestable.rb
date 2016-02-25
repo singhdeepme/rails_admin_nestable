@@ -32,11 +32,25 @@ module RailsAdmin
             # Methods
             def update_tree(tree_nodes, parent_node = nil)
               tree_nodes.each do |key, value|
-                model = @abstract_model.model.find(value['id'].to_s)
-                model.parent = parent_node || nil
-                model.send("#{@position_field}=".to_sym, (key.to_i + 1)) if @position_field.present?
-                model.save!(validate: @enable_callback)
-                update_tree(value['children'], model) if value.has_key?('children')
+                
+                parent =  @abstract_model.model.parent_node.find(value['id'].to_s) if !parent_node
+                update_tree(value['children'], parent) if value.has_key?('children')
+
+                
+                next if !parent_node
+                model = @abstract_model.model
+                parent_column = (model.parent_node.to_s+"_id".downcase).to_sym
+                child_column = (model.child_node.to_s+"_id".downcase).to_sym
+
+                model = model.where(parent_column => parent_node.id, child_column => value['id']).first
+
+                #model = @abstract_model.model.where(get_id(@abstract_model.model.parent_node) parent_node.id, get_id(@abstract_model.model.child_node) value['id'].to_s)
+                
+                if @position_field.present? && parent_node
+                  model.update({position: key.to_i + 1}) 
+                  model.save!(validate: @enable_callback)
+                end
+                
               end
             end
 

@@ -1,3 +1,47 @@
+:ruby
+  def nested_tree_nodess(tree_nodes = [],sub=false)
+    tree_nodes.map do |tree_node, sub_tree_nodes|
+      li_classes = 'dd-item dd3-item'
+
+      content_tag :li, class: li_classes, :'data-id' => tree_node.id do
+
+        output = content_tag :div, 'drag', class: 'dd-handle dd3-handle'
+        output+= content_tag :div, class: 'dd3-content' do
+          
+          case tree_node
+          when Element
+            title = tree_node.name
+          when Field
+            title = tree_node.label
+          when Form
+            title = tree_node.title
+          else
+            title = tree_node.name
+          end
+
+          content = link_to title , edit_path(@abstract_model, tree_node.id)
+          content+= content_tag :div, action_links(tree_node), class: 'pull-right links'
+        end
+
+        if sub_tree_nodes && sub_tree_nodes.any?
+          output+= content_tag :ol, nested_tree_nodess(sub_tree_nodes,true), class: 'dd-list'
+        end
+
+        output
+      end
+    end.join.html_safe
+  end
+
+  def action_links(model)
+    content_tag :ul, class: 'inline actions' do
+      menu_for :member, @abstract_model, model, true
+    end
+  end
+
+  def tree_max_depth
+    @nestable_conf.options[:max_depth] || 'false'
+  end
+
 #rails_admin_nestable
   - if [false, :only].exclude?(@options[:live_update])
     .form-group
@@ -8,7 +52,7 @@
   .form-group
     #tree_nodes.dd{ data: { update_path: nestable_path(model_name: @abstract_model), max_depth: tree_max_depth } }
       %ol.dd-list
-        = nested_tree_nodes @tree_nodes
+        = nested_tree_nodess @tree_nodes
   - if @options[:live_update] != :only
     .form-group
       %button.btn.btn-primary{ type: 'submit' }= t('admin.actions.nestable.update')

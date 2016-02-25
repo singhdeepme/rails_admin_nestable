@@ -8,7 +8,20 @@ module RailsAdminNestable
 
           output = content_tag :div, 'drag', class: 'dd-handle dd3-handle'
           output += content_tag :div, class: 'dd3-content' do
-            content = link_to object_label(tree_node), edit_path(@abstract_model, tree_node.id)
+            case tree_node
+            when 'Element'
+              title = tree_node.name
+            when 'Field'
+              title = tree_node.label
+            when 'Form'
+              title = tree_node.name
+            else
+              title = tree_node.name
+            end
+
+            content = link_to title , edit_path(@abstract_model, tree_node.id)
+
+            #content = link_to object_label(tree_node), edit_path(@abstract_model, tree_node.id)
             content += content_tag :div, action_links(tree_node), class: 'pull-right links'
           end
 
